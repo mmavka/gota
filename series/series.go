@@ -51,6 +51,7 @@ type Element interface {
 	Val() ElementValue // FIXME: Returning interface is a recipe for pain
 	String() string
 	Int() (int, error)
+	Int64() (int64, error)
 	Float() float64
 	Bool() (bool, error)
 
@@ -64,6 +65,12 @@ type intElements []intElement
 
 func (e intElements) Len() int           { return len(e) }
 func (e intElements) Elem(i int) Element { return &e[i] }
+
+// int64Elements is the concrete implementation of Elements for Int64 elements.
+type int64Elements []int64Element
+
+func (e int64Elements) Len() int           { return len(e) }
+func (e int64Elements) Elem(i int) Element { return &e[i] }
 
 // stringElements is the concrete implementation of Elements for String elements.
 type stringElements []stringElement
@@ -116,6 +123,7 @@ type Type string
 const (
 	String Type = "string"
 	Int    Type = "int"
+	Int64  Type = "int64"
 	Float  Type = "float"
 	Bool   Type = "bool"
 )
@@ -123,11 +131,11 @@ const (
 // Indexes represent the elements that can be used for selecting a subset of
 // elements within a Series. Currently supported are:
 //
-//     int            // Matches the given index number
-//     []int          // Matches all given index numbers
-//     []bool         // Matches all elements in a Series marked as true
-//     Series [Int]   // Same as []int
-//     Series [Bool]  // Same as []bool
+//	int            // Matches the given index number
+//	[]int          // Matches all given index numbers
+//	[]bool         // Matches all elements in a Series marked as true
+//	Series [Int]   // Same as []int
+//	Series [Bool]  // Same as []bool
 type Indexes interface{}
 
 // New is the generic Series constructor
@@ -144,6 +152,8 @@ func New(values interface{}, t Type, name string) Series {
 			ret.elements = make(stringElements, n)
 		case Int:
 			ret.elements = make(intElements, n)
+		case Int64:
+			ret.elements = make(int64Elements, n)
 		case Float:
 			ret.elements = make(floatElements, n)
 		case Bool:
@@ -173,6 +183,12 @@ func New(values interface{}, t Type, name string) Series {
 			ret.elements.Elem(i).Set(v[i])
 		}
 	case []int:
+		l := len(v)
+		preAlloc(l)
+		for i := 0; i < l; i++ {
+			ret.elements.Elem(i).Set(v[i])
+		}
+	case []int64:
 		l := len(v)
 		preAlloc(l)
 		for i := 0; i < l; i++ {
@@ -221,6 +237,11 @@ func Ints(values interface{}) Series {
 	return New(values, Int, "")
 }
 
+// Ints64 is a constructor for an Int64 Series
+func Ints64(values interface{}) Series {
+	return New(values, Int64, "")
+}
+
 // Floats is a constructor for a Float Series
 func Floats(values interface{}) Series {
 	return New(values, Float, "")
@@ -253,6 +274,8 @@ func (s *Series) Append(values interface{}) {
 		s.elements = append(s.elements.(stringElements), news.elements.(stringElements)...)
 	case Int:
 		s.elements = append(s.elements.(intElements), news.elements.(intElements)...)
+	case Int64:
+		s.elements = append(s.elements.(int64Elements), news.elements.(int64Elements)...)
 	case Float:
 		s.elements = append(s.elements.(floatElements), news.elements.(floatElements)...)
 	case Bool:
@@ -300,6 +323,12 @@ func (s Series) Subset(indexes Indexes) Series {
 		elements := make(intElements, len(idx))
 		for k, i := range idx {
 			elements[k] = s.elements.(intElements)[i]
+		}
+		ret.elements = elements
+	case Int64:
+		elements := make(int64Elements, len(idx))
+		for k, i := range idx {
+			elements[k] = s.elements.(int64Elements)[i]
 		}
 		ret.elements = elements
 	case Float:
@@ -490,6 +519,9 @@ func (s Series) Copy() Series {
 	case Int:
 		elements = make(intElements, s.Len())
 		copy(elements.(intElements), s.elements.(intElements))
+	case Int64:
+		elements = make(int64Elements, s.Len())
+		copy(elements.(int64Elements), s.elements.(int64Elements))
 	}
 	ret := Series{
 		Name:     name,
@@ -529,6 +561,21 @@ func (s Series) Int() ([]int, error) {
 	for i := 0; i < s.Len(); i++ {
 		e := s.elements.Elem(i)
 		val, err := e.Int()
+		if err != nil {
+			return nil, err
+		}
+		ret[i] = val
+	}
+	return ret, nil
+}
+
+// Int64 returns the elements of a Series as a []int64 or an error if the
+// transformation is not possible.
+func (s Series) Int64() ([]int64, error) {
+	ret := make([]int64, s.Len())
+	for i := 0; i < s.Len(); i++ {
+		e := s.elements.Elem(i)
+		val, err := e.Int64()
 		if err != nil {
 			return nil, err
 		}
