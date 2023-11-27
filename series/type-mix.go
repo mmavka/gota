@@ -3,7 +3,6 @@ package series
 import (
 	"fmt"
 	"math"
-	"strconv"
 	"time"
 )
 
@@ -23,38 +22,22 @@ func (e *interfaceElement) Set(value interface{}) {
 			e.nan = true
 			return
 		}
-		i, err := strconv.Atoi(value.(string))
-		if err != nil {
-			e.nan = true
-			return
-		}
-		e.e = i
+		e.e = val
 	case int:
-		e.e = int(val)
+		e.e = val
 	case float64:
-		f := val
-		if math.IsNaN(f) || math.IsInf(f, 0) || math.IsInf(f, 1) {
-			e.nan = true
-			return
-		}
-		e.e = int(f)
+		e.e = val
 	case bool:
-		b := val
-		if b {
-			e.e = 1
-		} else {
-			e.e = 0
-		}
+		e.e = val
 	case Element:
-		v, err := val.Int()
+		v, err := val.Interface()
 		if err != nil {
 			e.nan = true
 			return
 		}
 		e.e = v
 	default:
-		e.nan = true
-		return
+		e.e = value
 	}
 }
 
