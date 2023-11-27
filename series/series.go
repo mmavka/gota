@@ -5,11 +5,16 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"time"
 
 	"math"
 
 	"gonum.org/v1/gonum/stat"
 )
+
+// note that this const is also declared on the series pkg,
+// if changes happen, change the one on that pkg too.
+const timeformat = time.RFC3339
 
 // Series is a data structure designed for operating on arrays of elements that
 // should comply with a certain type structure. They are flexible enough that can
@@ -54,6 +59,7 @@ type Element interface {
 	Int64() (int64, error)
 	Float() float64
 	Bool() (bool, error)
+	Time() (time.Time, error)
 
 	// Information methods
 	IsNA() bool
@@ -89,6 +95,12 @@ type boolElements []boolElement
 
 func (e boolElements) Len() int           { return len(e) }
 func (e boolElements) Elem(i int) Element { return &e[i] }
+
+// timeElements is the concrete implementation of Elements for Time elements.
+type timeElements []timeElement
+
+func (e timeElements) Len() int           { return len(e) }
+func (e timeElements) Elem(i int) Element { return &e[i] }
 
 // ElementValue represents the value that can be used for marshaling or
 // unmarshaling Elements.
@@ -126,6 +138,7 @@ const (
 	Int64  Type = "int64"
 	Float  Type = "float"
 	Bool   Type = "bool"
+	Time   Type = "time"
 )
 
 // Indexes represent the elements that can be used for selecting a subset of

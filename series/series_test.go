@@ -812,6 +812,114 @@ func TestInts(t *testing.T) {
 	}
 }
 
+func TestInts64(t *testing.T) {
+	table := []struct {
+		series   Series
+		expected string
+	}{
+		{
+			Ints64([]string{"A", "B", "1", "2"}),
+			"[NaN NaN 1 2]",
+		},
+		{
+			Ints64([]string{"1"}),
+			"[1]",
+		},
+		{
+			Ints64("2"),
+			"[2]",
+		},
+		{
+			Ints64([]int{1, 2, 3}),
+			"[1 2 3]",
+		},
+		{
+			Ints64([]int64{1, 2, 3}),
+			"[1 2 3]",
+		},
+		{
+			Ints64([]int{2}),
+			"[2]",
+		},
+		{
+			Ints64([]int64{2}),
+			"[2]",
+		},
+		{
+			Ints64(-1),
+			"[-1]",
+		},
+		{
+			Ints64([]float64{1, 2, 3}),
+			"[1 2 3]",
+		},
+		{
+			Ints64([]float64{2}),
+			"[2]",
+		},
+		{
+			Ints64(-1.0),
+			"[-1]",
+		},
+		{
+			Ints64(math.NaN()),
+			"[NaN]",
+		},
+		{
+			Ints64(math.Inf(1)),
+			"[NaN]",
+		},
+		{
+			Ints64(math.Inf(-1)),
+			"[NaN]",
+		},
+		{
+			Ints64([]bool{true, true, false}),
+			"[1 1 0]",
+		},
+		{
+			Ints64([]bool{false}),
+			"[0]",
+		},
+		{
+			Ints64(true),
+			"[1]",
+		},
+		{
+			Ints64([]int{}),
+			"[]",
+		},
+		{
+			Ints64(nil),
+			"[NaN]",
+		},
+		{
+			Ints64(Strings([]string{"1", "2", "3"})),
+			"[1 2 3]",
+		},
+		{
+			Ints64(Ints64([]string{"1", "2", "3"})),
+			"[1 2 3]",
+		},
+	}
+	for testnum, test := range table {
+		if err := test.series.Err; err != nil {
+			t.Errorf("Test:%v\nError:%v", testnum, err)
+		}
+		expected := test.expected
+		received := fmt.Sprint(test.series)
+		if expected != received {
+			t.Errorf(
+				"Test:%v\nExpected:\n%v\nReceived:\n%v",
+				testnum, expected, received,
+			)
+		}
+		if err := checkTypes(test.series); err != nil {
+			t.Errorf("Test:%v\nError:%v", testnum, err)
+		}
+	}
+}
+
 func TestFloats(t *testing.T) {
 	table := []struct {
 		series   Series
@@ -1739,8 +1847,18 @@ func TestSeries_Sum(t *testing.T) {
 			11155,
 		},
 		{
+			// Extreme observations should not factor in.
+			Ints64([]int64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100, 1000, 10000}),
+			11155,
+		},
+		{
 			// Change in order should influence result.
 			Ints([]int{1, 2, 3, 10, 100, 1000, 10000, 4, 5, 6, 7, 8, 9}),
+			11155,
+		},
+		{
+			// Change in order should influence result.
+			Ints64([]int64{1, 2, 3, 10, 100, 1000, 10000, 4, 5, 6, 7, 8, 9}),
 			11155,
 		},
 		{
@@ -1790,6 +1908,12 @@ func TestSeries_Slice(t *testing.T) {
 			3,
 			Ints([]int{1, 2, 3, 4, 5}),
 			Ints([]int{1, 2, 3}),
+		},
+		{
+			0,
+			3,
+			Ints64([]int64{1, 2, 3, 4, 5}),
+			Ints64([]int64{1, 2, 3}),
 		},
 		{
 			1,

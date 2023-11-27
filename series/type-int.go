@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"time"
 )
 
 type intElement struct {
@@ -32,9 +33,7 @@ func (e *intElement) Set(value interface{}) {
 		e.e = int(val)
 	case float64:
 		f := val
-		if math.IsNaN(f) ||
-			math.IsInf(f, 0) ||
-			math.IsInf(f, 1) {
+		if math.IsNaN(f) || math.IsInf(f, 0) || math.IsInf(f, 1) {
 			e.nan = true
 			return
 		}
@@ -120,6 +119,10 @@ func (e intElement) Bool() (bool, error) {
 		return false, nil
 	}
 	return false, fmt.Errorf("can't convert Int \"%v\" to bool", e.e)
+}
+
+func (e intElement) Time() (time.Time, error) {
+	return time.Time{}, fmt.Errorf("can't convert Int to time.Time")
 }
 
 func (e intElement) Eq(elem Element) bool {

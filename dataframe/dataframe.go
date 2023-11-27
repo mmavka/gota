@@ -12,12 +12,17 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/mmavka/gota/series"
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
 )
+
+// note that this const is also declared on the series pkg,
+// if changes happen, change the one on that pkg too.
+const timeformat = time.RFC3339
 
 // DataFrame is a data structure designed for operating on table like data (Such
 // as Excel, CSV files, SQL table results...) where every column have to keep type
@@ -842,13 +847,15 @@ func (df DataFrame) Rapply(f func(series.Series) series.Series) DataFrame {
 	}
 
 	detectType := func(types []series.Type) series.Type {
-		var hasStrings, hasFloats, hasInts, hasInts64, hasBools bool
+		var hasStrings, hasFloats, hasInts, hasInts64, hasTimes, hasBools bool
 		for _, t := range types {
 			switch t {
 			case series.String:
 				hasStrings = true
 			case series.Float:
 				hasFloats = true
+			case series.Time:
+				hasTimes = true
 			case series.Int:
 				hasInts = true
 			case series.Int64:
@@ -862,6 +869,8 @@ func (df DataFrame) Rapply(f func(series.Series) series.Series) DataFrame {
 			return series.String
 		case hasBools:
 			return series.Bool
+		case hasTimes:
+			return series.Time
 		case hasFloats:
 			return series.Float
 		case hasInts:
@@ -1183,6 +1192,8 @@ func parseType(s string) (series.Type, error) {
 		return series.String, nil
 	case "bool":
 		return series.Bool, nil
+	case "time":
+		return series.Time, nil
 	}
 	return "", fmt.Errorf("type (%s) is not supported", s)
 }
@@ -2242,7 +2253,7 @@ func parseSelectIndexes(l int, indexes SelectIndexes, colnames []string) ([]int,
 }
 
 func findType(arr []string) (series.Type, error) {
-	var hasFloats, hasInts, hasInts64, hasBools, hasStrings bool
+	var hasFloats, hasInts, hasInts64, hasBools, hasTimes, hasStrings bool
 	for _, str := range arr {
 		if str == "" || str == "NaN" {
 			continue
@@ -2263,6 +2274,10 @@ func findType(arr []string) (series.Type, error) {
 			hasBools = true
 			continue
 		}
+		if _, err := time.Parse(timeformat, str); err == nil {
+			hasTimes = true
+			continue
+		}
 		hasStrings = true
 	}
 
@@ -2271,6 +2286,8 @@ func findType(arr []string) (series.Type, error) {
 		return series.String, nil
 	case hasBools:
 		return series.Bool, nil
+	case hasTimes:
+		return series.Time, nil
 	case hasFloats:
 		return series.Float, nil
 	case hasInts:
