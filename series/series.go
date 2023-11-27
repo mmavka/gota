@@ -656,6 +656,36 @@ func (s Series) Bool() ([]bool, error) {
 	return ret, nil
 }
 
+// Times returns the elements of a Series as a []time.Time or an error if the
+// transformation is not possible.
+func (s Series) Times() ([]time.Time, error) {
+	ret := make([]time.Time, s.Len())
+	for i := 0; i < s.Len(); i++ {
+		e := s.elements.Elem(i)
+		val, err := e.Time()
+		if err != nil {
+			return nil, err
+		}
+		ret[i] = val
+	}
+	return ret, nil
+}
+
+// Interfaces returns the elements of a Series as a []interface or an error if the
+// transformation is not possible.
+func (s Series) Interfaces() ([]interface{}, error) {
+	ret := make([]interface{}, s.Len())
+	for i := 0; i < s.Len(); i++ {
+		e := s.elements.Elem(i)
+		val, err := e.Interface()
+		if err != nil {
+			return nil, err
+		}
+		ret[i] = val
+	}
+	return ret, nil
+}
+
 // Type returns the type of a given series
 func (s Series) Type() Type {
 	return s.t
