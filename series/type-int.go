@@ -125,6 +125,13 @@ func (e intElement) Time() (time.Time, error) {
 	return time.Time{}, fmt.Errorf("can't convert Int to time.Time")
 }
 
+func (e intElement) Interface() (interface{}, error) {
+	if e.IsNA() {
+		return false, fmt.Errorf("can't convert NaN to interface")
+	}
+	return e.e, nil
+}
+
 func (e intElement) Eq(elem Element) bool {
 	i, err := elem.Int()
 	if err != nil || e.IsNA() {

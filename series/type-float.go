@@ -132,6 +132,13 @@ func (e floatElement) Time() (time.Time, error) {
 	return time.Time{}, fmt.Errorf("can't convert Float to time.Time")
 }
 
+func (e floatElement) Interface() (interface{}, error) {
+	if e.IsNA() {
+		return false, fmt.Errorf("can't convert NaN to interface")
+	}
+	return e.e, nil
+}
+
 func (e floatElement) Eq(elem Element) bool {
 	f := elem.Float()
 	if e.IsNA() || math.IsNaN(f) {

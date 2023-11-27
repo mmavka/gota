@@ -140,6 +140,13 @@ func (e boolElement) Time() (time.Time, error) {
 	return time.Time{}, fmt.Errorf("can't convert Bool to time.Time")
 }
 
+func (e boolElement) Interface() (interface{}, error) {
+	if e.IsNA() {
+		return false, fmt.Errorf("can't convert NaN to interface")
+	}
+	return e.e, nil
+}
+
 func (e boolElement) Eq(elem Element) bool {
 	b, err := elem.Bool()
 	if err != nil || e.IsNA() {

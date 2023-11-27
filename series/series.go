@@ -60,6 +60,7 @@ type Element interface {
 	Float() float64
 	Bool() (bool, error)
 	Time() (time.Time, error)
+	Interface() (interface{}, error)
 
 	// Information methods
 	IsNA() bool
@@ -102,6 +103,12 @@ type timeElements []timeElement
 func (e timeElements) Len() int           { return len(e) }
 func (e timeElements) Elem(i int) Element { return &e[i] }
 
+// interfaceElement is the concrete implementation of Elements for Time elements.
+type interfaceElements []interfaceElement
+
+func (e interfaceElements) Len() int           { return len(e) }
+func (e interfaceElements) Elem(i int) Element { return &e[i] }
+
 // ElementValue represents the value that can be used for marshaling or
 // unmarshaling Elements.
 type ElementValue interface{}
@@ -133,12 +140,13 @@ type Type string
 
 // Supported Series Types
 const (
-	String Type = "string"
-	Int    Type = "int"
-	Int64  Type = "int64"
-	Float  Type = "float"
-	Bool   Type = "bool"
-	Time   Type = "time"
+	String    Type = "string"
+	Int       Type = "int"
+	Int64     Type = "int64"
+	Float     Type = "float"
+	Bool      Type = "bool"
+	Time      Type = "time"
+	Interface Type = "interface"
 )
 
 // Indexes represent the elements that can be used for selecting a subset of
@@ -171,6 +179,10 @@ func New(values interface{}, t Type, name string) Series {
 			ret.elements = make(floatElements, n)
 		case Bool:
 			ret.elements = make(boolElements, n)
+		case Time:
+			ret.elements = make(timeElements, n)
+		case Interface:
+			ret.elements = make(interfaceElements, n)
 		default:
 			panic(fmt.Sprintf("unknown type %v", t))
 		}
@@ -265,6 +277,16 @@ func Bools(values interface{}) Series {
 	return New(values, Bool, "")
 }
 
+// Times is a constructor for a Time Series
+func Times(values interface{}) Series {
+	return New(values, Time, "")
+}
+
+// Interfaces is a constructor for a Interface Series
+func Interfaces(values interface{}) Series {
+	return New(values, Interface, "")
+}
+
 // Empty returns an empty Series of the same type
 func (s Series) Empty() Series {
 	return New([]int{}, s.t, s.Name)
@@ -293,6 +315,10 @@ func (s *Series) Append(values interface{}) {
 		s.elements = append(s.elements.(floatElements), news.elements.(floatElements)...)
 	case Bool:
 		s.elements = append(s.elements.(boolElements), news.elements.(boolElements)...)
+	case Time:
+		s.elements = append(s.elements.(timeElements), news.elements.(timeElements)...)
+	case Interface:
+		s.elements = append(s.elements.(interfaceElements), news.elements.(interfaceElements)...)
 	}
 }
 
@@ -354,6 +380,18 @@ func (s Series) Subset(indexes Indexes) Series {
 		elements := make(boolElements, len(idx))
 		for k, i := range idx {
 			elements[k] = s.elements.(boolElements)[i]
+		}
+		ret.elements = elements
+	case Time:
+		elements := make(timeElements, len(idx))
+		for k, i := range idx {
+			elements[k] = s.elements.(timeElements)[i]
+		}
+		ret.elements = elements
+	case Interface:
+		elements := make(interfaceElements, len(idx))
+		for k, i := range idx {
+			elements[k] = s.elements.(interfaceElements)[i]
 		}
 		ret.elements = elements
 	default:
@@ -535,6 +573,12 @@ func (s Series) Copy() Series {
 	case Int64:
 		elements = make(int64Elements, s.Len())
 		copy(elements.(int64Elements), s.elements.(int64Elements))
+	case Time:
+		elements = make(timeElements, s.Len())
+		copy(elements.(timeElements), s.elements.(timeElements))
+	case Interface:
+		elements = make(interfaceElements, s.Len())
+		copy(elements.(interfaceElements), s.elements.(interfaceElements))
 	}
 	ret := Series{
 		Name:     name,

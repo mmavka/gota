@@ -107,6 +107,13 @@ func (e timeElement) Time() (time.Time, error) {
 	return e.e, nil
 }
 
+func (e timeElement) Interface() (interface{}, error) {
+	if e.IsNA() {
+		return false, fmt.Errorf("can't convert NaN to interface")
+	}
+	return e.e, nil
+}
+
 func (e timeElement) Eq(elem Element) bool {
 	if e.IsNA() || elem.IsNA() {
 		return false

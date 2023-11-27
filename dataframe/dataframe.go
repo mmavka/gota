@@ -847,7 +847,7 @@ func (df DataFrame) Rapply(f func(series.Series) series.Series) DataFrame {
 	}
 
 	detectType := func(types []series.Type) series.Type {
-		var hasStrings, hasFloats, hasInts, hasInts64, hasTimes, hasBools bool
+		var hasStrings, hasFloats, hasInts, hasInts64, hasTimes, hasBools, hasInterface bool
 		for _, t := range types {
 			switch t {
 			case series.String:
@@ -862,6 +862,8 @@ func (df DataFrame) Rapply(f func(series.Series) series.Series) DataFrame {
 				hasInts64 = true
 			case series.Bool:
 				hasBools = true
+			case series.Interface:
+				hasInterface = true
 			}
 		}
 		switch {
@@ -877,6 +879,8 @@ func (df DataFrame) Rapply(f func(series.Series) series.Series) DataFrame {
 			return series.Int
 		case hasInts64:
 			return series.Int64
+		case hasInterface:
+			return series.Interface
 		default:
 			panic("type not supported")
 		}
@@ -1194,6 +1198,8 @@ func parseType(s string) (series.Type, error) {
 		return series.Bool, nil
 	case "time":
 		return series.Time, nil
+	case "interface":
+		return series.Interface, nil
 	}
 	return "", fmt.Errorf("type (%s) is not supported", s)
 }

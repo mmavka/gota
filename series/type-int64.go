@@ -127,6 +127,13 @@ func (e int64Element) Time() (time.Time, error) {
 	return time.Time{}, fmt.Errorf("can't convert Int64 to time.Time")
 }
 
+func (e *int64Element) Interface() (interface{}, error) {
+	if e.IsNA() {
+		return false, fmt.Errorf("can't convert NaN to interface")
+	}
+	return e.e, nil
+}
+
 func (e int64Element) Eq(elem Element) bool {
 	i, err := elem.Int64()
 	if err != nil || e.IsNA() {
