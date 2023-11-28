@@ -43,6 +43,13 @@ type DataFrame struct {
 
 	// deprecated: Use Error() instead
 	Err error
+
+	PrintOption PrintOption
+}
+
+type PrintOption struct {
+	MaxRows  int
+	MaxChars int
 }
 
 // New is the generic DataFrame constructor
@@ -65,6 +72,10 @@ func New(se ...series.Series) DataFrame {
 		columns: columns,
 		ncols:   ncols,
 		nrows:   nrows,
+		PrintOption: PrintOption{
+			MaxRows:  10,
+			MaxChars: 70,
+		},
 	}
 	colnames := df.Names()
 	fixColnames(colnames)
@@ -106,9 +117,19 @@ func (df DataFrame) Copy() DataFrame {
 	return copy
 }
 
+func (df DataFrame) PrintOptionMaxRows(maxRows int) DataFrame {
+	df.PrintOption.MaxRows = maxRows
+	return df
+}
+
+func (df DataFrame) PrintOptionMaxChars(maxChars int) DataFrame {
+	df.PrintOption.MaxChars = maxChars
+	return df
+}
+
 // String implements the Stringer interface for DataFrame
 func (df DataFrame) String() (str string) {
-	return df.print(true, true, true, true, 10, 70, "DataFrame")
+	return df.print(true, true, true, true, df.PrintOption.MaxRows, df.PrintOption.MaxChars, "DataFrame")
 }
 
 // Returns error or nil if no error occured

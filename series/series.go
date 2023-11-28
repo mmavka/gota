@@ -673,17 +673,17 @@ func (s Series) Times() ([]time.Time, error) {
 
 // Interfaces returns the elements of a Series as a []interface or an error if the
 // transformation is not possible.
-func (s Series) Interfaces() ([]interface{}, error) {
+func (s Series) Interfaces() []interface{} {
 	ret := make([]interface{}, s.Len())
 	for i := 0; i < s.Len(); i++ {
 		e := s.elements.Elem(i)
 		val, err := e.Interface()
 		if err != nil {
-			return nil, err
+			return nil
 		}
 		ret[i] = val
 	}
-	return ret, nil
+	return ret
 }
 
 // Type returns the type of a given series
